@@ -34,15 +34,36 @@
 
 const express = require('express');
 const { resolve } = require('path');
+const fs = require('fs');
 
 const app = express();
 const port = 3010;
+const jsondata = fs.readFileSync('data.json');
+const data = JSON.parse(jsondata);
 
 app.use(express.static('static'));
+app.use(express.json());
 
 app.get('/', (req, res) => {
   res.sendFile(resolve(__dirname, 'pages/index.html'));
 });
+
+app.post('/students/above-threshold', sendFilteredData);
+
+async function sendFilteredData(req, res){
+    const threshold = req.body.threshold;
+    
+    let filtered = data.filter((ele)=>{
+      return ele.total>threshold;
+    }).map((ele)=>{
+      return {
+        name: ele.name,
+        total: ele.total
+      }
+    })
+    const count = filtered.length;
+    res.status(200).send({count: count, students: filtered})
+}
 
 app.listen(port, () => {
   console.log(`Example app listening at http://localhost:${port}`);
